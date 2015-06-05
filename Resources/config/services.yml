@@ -1,0 +1,4 @@
+services:
+#    generalov_assetic_tools.example:
+#        class: Generalov\AsseticToolsBundle\Example
+#        arguments: [@service_id, "plain_value", %parameter%]

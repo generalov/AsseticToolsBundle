@@ -1,0 +1,14 @@
+{
+    "name": "generalov/assetic-tools-bundle",
+    "description": "It builds Assetic to integrate with external watch engines like Gulp, Grunt, BrowserSync and etc.",
+    "homepage": "https://github.com/generalov/AsseticToolsBundle",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Evgeny V. Generalov",
+            "email": "e.generalov@gmail.com"
+        }
+    ],
+    "require": {}
+}
