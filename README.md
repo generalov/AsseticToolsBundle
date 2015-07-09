@@ -30,11 +30,11 @@ class AppKernel extends Kernel
 {
     public function registerBundles()
     {
-        $bundles = array(
+        if (in_array($this->getEnvironment(), array('dev', 'test'))) {
             // ...
 
-            new Generalov\AsseticToolsBundle\GeneralovAsseticToolsBundle(),
-        );
+            $bundles[] = new Generalov\AsseticToolsBundle\GeneralovAsseticToolsBundle();
+        }
 
         // ...
     }
@@ -45,3 +45,5 @@ class AppKernel extends Kernel
 
 Step 3: Install Gulp
 --------------------
+
+See Symfony2 project example at [docs/example](docs/example)

@@ -10,5 +10,8 @@
             "email": "e.generalov@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {"Generalov\\AsseticToolsBundle\\": ""}
+    },
     "require": {}
 }
