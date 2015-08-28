@@ -3,11 +3,11 @@ var gulp = require('gulp'),
     net = require('net'),
     newer = require('gulp-newer'),
     watch = require('gulp-chokidar')(gulp),
-    nodemon = require('gulp-nodemon'),
     forever = require('forever-monitor'),
     browserSync = require("browser-sync").create();
 
-var asseticSocket = '/tmp/assetic.socket';
+var asseticSocket = '/tmp/assetic-' + process.pid + '.socket';
+var backendHost="127.0.0.1:8080";
 var asseticFiles = globby.sync(['app/Resources/public', 'src/*/*/Resources/public']).reduce(function (a, f) {
     a.push(f + '/**/*.css');
     a.push(f + '/**/*.js');
@@ -15,7 +15,9 @@ var asseticFiles = globby.sync(['app/Resources/public', 'src/*/*/Resources/publi
 }, []);
 
 
-gulp.task('serve', ['symfony-server', 'watch'], function () {
+gulp.task('serve', ['symfony-server', 'bs', 'watch']);
+
+gulp.task('bs', function () {
     browserSync.init({
         baseDir: 'web/',
         files: [
@@ -28,7 +30,7 @@ gulp.task('serve', ['symfony-server', 'watch'], function () {
         reloadOnRestart: true,
         online: false,
         proxy: {
-            target: '127.0.0.1:8080',
+            target: backendHost,
             xfwd: true,
             reqHeaders: function (config) {
                 return {
@@ -73,5 +75,5 @@ gulp.task('assetic-dump-files', function () {
 });
 
 gulp.task('symfony-server', function () {
-    var child = forever.start(['php', 'app/console', 'server:run', '127.0.0.1:8080'], {});
+    var child = forever.start(['php', 'app/console', 'server:run', backendHost], {});
 });
