@@ -1,5 +1,6 @@
 var gulp = require('gulp'),
     globby = require('globby'),
+    minimist = require('minimist'),
     net = require('net'),
     newer = require('gulp-newer'),
     watch = require('gulp-chokidar')(gulp),
@@ -7,22 +8,46 @@ var gulp = require('gulp'),
     browserSync = require("browser-sync").create(),
     tmp = require('tmp');
 
-var backendHost="127.0.0.1:8080";
-var asseticFiles = globby.sync(['app/Resources/public', 'src/*/*/Resources/public']).reduce(function (a, f) {
-    /* common */
-    a.push(f + '/**/*.css');
-    a.push(f + '/**/*.js');
 
-    /* scss */
-    a.push(f + '/**/*.scss');
-    a.push('!' + f + '/**/*scsslint_tmp*.scss');
-    return a;
-}, []);
+var defaultOptions = {
+        string: ['env', 'server'],
+        default: {
+            env: process.env.NODE_ENV || 'production',
+            server: '127.0.0.1:8080'
+        }
+    },
+    asseticRoots = ['app/Resources/public', 'src/*/*/Resources/public', 'web/bower'],
+    asseticFiles = ['{root}/**/*.css', '{root}/**/*.js', '{root}/**/*.scss', '!{root}/**/*scsslint_tmp*.scss'],
+    asseticSocketOpts = {mode: 0600, prefix: 'assetic-dump-files', postfix: '.sock'};
 
-var asseticSocket = tmp.tmpNameSync({ mode: 0600, prefix: 'assetic-dump-files', postfix: '.sock' });
+
+var options = minimist(process.argv.slice(2), defaultOptions),
+    server = options.server,
+    asseticFiles = globby.sync(asseticRoots).reduce(function (a, f) {
+            asseticFiles.forEach(function (pattern) {
+                a.push(pattern.replace(/\{root\}/, f));
+            });
+            return a;
+        },
+        []),
+    asseticSocket = tmp.tmpNameSync(asseticSocketOpts);
+
 tmp.setGracefulCleanup();
 
-gulp.task('watch', ['assetic-dump-files'], function () {
+
+gulp.task('symfony-assetic-dump-files', function () {
+    var child = forever.start([
+        'php app/console assetic:dump-files --force --listen=' + asseticSocket
+    ], {});
+});
+
+
+gulp.task('symfony-server', function () {
+    var child = forever.start(['php', 'app/console', 'server:run', server], {});
+});
+
+
+gulp.task('watch', ['symfony-assetic-dump-files'], function () {
     watch(asseticFiles, {root: 'src'}).on('change', onChange);
     watch(asseticFiles, {root: 'src'}).on('delete', onUpdate);
     watch(asseticFiles, {root: 'src'}).on('add', onUpdate);
@@ -43,18 +68,6 @@ gulp.task('watch', ['assetic-dump-files'], function () {
 });
 
 
-gulp.task('assetic-dump-files', function () {
-    var child = forever.start([
-        'php app/console assetic:dump-files --force --listen=' + asseticSocket
-    ], {});
-});
-
-
-gulp.task('symfony-server', function () {
-    var child = forever.start(['php', 'app/console', 'server:run', backendHost], {});
-});
-
-
 gulp.task('bs', function () {
     browserSync.init({
         baseDir: 'web/',
@@ -68,7 +81,7 @@ gulp.task('bs', function () {
         reloadOnRestart: true,
         online: false,
         proxy: {
-            target: backendHost,
+            target: server,
             xfwd: true,
             reqHeaders: function (config) {
                 return {
@@ -85,4 +98,3 @@ gulp.task('bs', function () {
 
 
 gulp.task('serve', ['symfony-server', 'bs', 'watch']);
-
